@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -55,6 +55,170 @@ def verify_tamga(tamga_id: str, db: Session = Depends(get_db)):
         "verified_at": str(record.updated_at) if record.updated_at else str(record.created_at),
         "blockchain_note": "Параметры зафиксированы криптографически. Изменение задним числом невозможно.",
     }
+
+
+# ── Execution Oracle HTML — красивая страница для телефона ───────────────────
+
+@router.get("/verify/{tamga_id}/html", tags=["Verification"], response_class=HTMLResponse)
+def verify_tamga_html(tamga_id: str, db: Session = Depends(get_db)):
+    """HTML-страница верификации для сканирования QR с телефона."""
+    record = (
+        db.query(models.Application)
+        .filter(models.Application.tamga_id == tamga_id)
+        .first()
+    )
+
+    if not record:
+        return HTMLResponse(content=f"""<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Документ не найден — Baiterek Oracle</title>
+<style>
+  body{{margin:0;font-family:-apple-system,sans-serif;background:#0a0e1a;color:#fff;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box}}
+  .card{{background:#1a2035;border:1px solid #ff4444;border-radius:20px;padding:40px 30px;text-align:center;max-width:400px;width:100%}}
+  .icon{{font-size:64px;margin-bottom:16px}}
+  h1{{font-size:22px;color:#ff4444;margin:0 0 12px}}
+  p{{color:#8899aa;font-size:14px;line-height:1.6}}
+  .tid{{font-family:monospace;font-size:11px;color:#445566;margin-top:16px;word-break:break-all}}
+</style></head><body>
+<div class="card">
+  <div class="icon">🚫</div>
+  <h1>Документ не найден</h1>
+  <p>Tamga ID не зарегистрирован в системе Baiterek Execution Oracle.</p>
+  <div class="tid">{tamga_id}</div>
+</div></body></html>""", status_code=404)
+
+    trust = record.trust_score or 0
+    trust_pct = int(trust * 100)
+    is_verified = record.verification_status == "VERIFIED"
+    status_label = APP_STATUSES.get(record.status, record.status)
+    issued = str(record.created_at)[:16].replace("T", " ")
+    color = "#00e676" if is_verified else "#ff4444"
+    status_color = {
+        "pending": "#ffaa00", "approved": "#00e676",
+        "rejected": "#ff4444", "under_review": "#4488ff",
+        "requires_docs": "#ff8800"
+    }.get(record.status, "#aaaaaa")
+
+    arc_offset = 220 - int(220 * trust)
+
+    html = f"""<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Execution Oracle — {record.app_id[:8].upper()}</title>
+<style>
+  *{{box-sizing:border-box;margin:0;padding:0}}
+  body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       background:linear-gradient(135deg,#0a0e1a 0%,#0d1530 100%);
+       color:#fff;min-height:100vh;padding:20px 16px 40px}}
+  .header{{text-align:center;padding:24px 0 20px}}
+  .header-logo{{font-size:13px;color:#4488ff;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}}
+  .header-title{{font-size:22px;font-weight:800;color:#fff}}
+  .header-sub{{font-size:12px;color:#445577;margin-top:4px}}
+  .seal{{display:flex;flex-direction:column;align-items:center;margin:20px 0}}
+  .seal svg{{width:160px;height:160px}}
+  .seal-pct{{font-size:38px;font-weight:900;color:{color}}}
+  .seal-label{{font-size:12px;color:#667788;margin-top:2px}}
+  .badge{{display:inline-block;padding:6px 18px;border-radius:30px;font-size:13px;font-weight:700;
+          letter-spacing:1px;margin-top:12px;
+          background:{"rgba(0,230,118,0.15)" if is_verified else "rgba(255,68,68,0.15)"};
+          color:{color};border:1px solid {color}}}
+  .card{{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+         border-radius:16px;padding:20px;margin:12px 0}}
+  .card-title{{font-size:10px;color:#445577;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:14px}}
+  .row{{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;
+        border-bottom:1px solid rgba(255,255,255,0.05)}}
+  .row:last-child{{border-bottom:none}}
+  .row-label{{font-size:12px;color:#667788;flex:1}}
+  .row-value{{font-size:13px;font-weight:600;color:#ccd8ee;text-align:right;flex:2;word-break:break-all}}
+  .row-value.mono{{font-family:monospace;font-size:11px;color:#4488ff}}
+  .status-dot{{display:inline-block;width:8px;height:8px;border-radius:50%;
+               background:{status_color};margin-right:6px}}
+  .footer{{text-align:center;margin-top:24px;padding:0 10px}}
+  .footer-note{{font-size:11px;color:#334455;line-height:1.7}}
+  .footer-brand{{font-size:12px;color:#223344;margin-top:12px;font-weight:600}}
+  .verified-icon{{font-size:18px;vertical-align:middle;margin-right:4px}}
+</style></head><body>
+
+<div class="header">
+  <div class="header-logo">Baiterek · Execution Oracle</div>
+  <div class="header-title">Верификация договора</div>
+  <div class="header-sub">QumyrsqaCore™ · Cryptographic Proof</div>
+</div>
+
+<div class="seal">
+  <svg viewBox="0 0 160 160">
+    <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+    <circle cx="80" cy="80" r="70" fill="none" stroke="{color}" stroke-width="12"
+      stroke-dasharray="220" stroke-dashoffset="{arc_offset}"
+      stroke-linecap="round" transform="rotate(-90 80 80)"
+      style="transition:stroke-dashoffset 1s ease"/>
+    <text x="80" y="74" text-anchor="middle" font-size="34" font-weight="900" fill="{color}">{trust_pct}</text>
+    <text x="80" y="94" text-anchor="middle" font-size="13" fill="#667788">Trust Score</text>
+    <text x="80" y="112" text-anchor="middle" font-size="11" fill="#445566">%</text>
+  </svg>
+  <div class="seal-pct" style="display:none">{trust_pct}%</div>
+  <div class="badge">
+    {"✓ VERIFIED" if is_verified else "✗ BLOCKED"}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Данные договора</div>
+  <div class="row">
+    <span class="row-label">Номер заявки</span>
+    <span class="row-value mono">{record.app_id[:8].upper()}</span>
+  </div>
+  <div class="row">
+    <span class="row-label">ЕИШ-номер</span>
+    <span class="row-value mono">{record.eis_ref or "—"}</span>
+  </div>
+  <div class="row">
+    <span class="row-label">Продукт</span>
+    <span class="row-value">{record.atom_id}</span>
+  </div>
+  <div class="row">
+    <span class="row-label">Статус</span>
+    <span class="row-value"><span class="status-dot"></span>{status_label}</span>
+  </div>
+  <div class="row">
+    <span class="row-label">Выдан</span>
+    <span class="row-value">{issued} UTC</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Криптографический паспорт</div>
+  <div class="row">
+    <span class="row-label">Tamga ID</span>
+    <span class="row-value mono">{(record.tamga_id or "")[:20]}…</span>
+  </div>
+  <div class="row">
+    <span class="row-label">Atom Tamga</span>
+    <span class="row-value mono">{(record.atom_tamga_id or "")[:20]}…</span>
+  </div>
+  <div class="row">
+    <span class="row-label">Amanat ID</span>
+    <span class="row-value mono">{"" + (record.amanat_id or "")[:20] + "…" if record.amanat_id else "Не зафиксирован"}</span>
+  </div>
+  <div class="row">
+    <span class="row-label">Алгоритм</span>
+    <span class="row-value">SHA-256 · Ed25519</span>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-note">
+    Параметры договора зафиксированы криптографически в момент верификации.<br>
+    Изменение задним числом математически невозможно.
+  </div>
+  <div class="footer-brand">QumyrsqaCore™ Execution Oracle · Baiterek v1.0</div>
+</div>
+
+</body></html>"""
+    return HTMLResponse(content=html)
 
 
 # ── QR-код ────────────────────────────────────────────────────────────────────
@@ -438,7 +602,7 @@ def _generate_contract_pdf(record: models.Application) -> bytes:
     pdf.ln(10)
 
     # ── 7. QR-код верификации ──────────────────────────────────────────────────
-    verify_url = f"{settings.VERIFY_BASE_URL}/verify/{record.tamga_id}"
+    verify_url = f"{settings.VERIFY_BASE_URL}/verify/{record.tamga_id}/html"
     qr_size_mm = 38   # размер QR-изображения в PDF (мм)
     text_col_x = lm + qr_size_mm + 6
 
