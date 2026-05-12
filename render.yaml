@@ -1,0 +1,36 @@
+services:
+  # ── Aksakal (Go ML Engine) ────────────────────────────────────────────────
+  - type: web
+    name: baiterek-aksakal
+    runtime: go
+    rootDir: aksakal
+    buildCommand: go build -o aksakal aksakal.go
+    startCommand: ./aksakal
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+
+  # ── Backend (FastAPI) ─────────────────────────────────────────────────────
+  - type: web
+    name: baiterek-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash start.sh
+    plan: free
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: admin@baiterek.kz
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: VERIFY_BASE_URL
+        value: https://baiterek-backend-dpp8.onrender.com
+      - key: AKSAKAL_URL
+        fromService:
+          type: web
+          name: baiterek-aksakal
+          property: host
+          envVarKey: AKSAKAL_URL

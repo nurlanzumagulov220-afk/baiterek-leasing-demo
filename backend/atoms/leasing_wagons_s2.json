@@ -1,0 +1,269 @@
+{
+  "atom_id": "leasing_wagons_s2",
+  "version": "1.0.0",
+  "product_name": "Лизинг вагонов и авиатранспорта — II этап (экспортный)",
+  "category": "leasing",
+  "description": "Приобретение вагонов и авиатранспорта в лизинг для субъектов экспортной деятельности",
+  "logic_math": "annuity",
+  "params": {
+    "rate_annual_pct": 14.0,
+    "min_amount": 10000000,
+    "max_amount": 1000000000,
+    "min_months": 24,
+    "max_months": 120,
+    "advance_pct_min": 15,
+    "advance_pct_max": 49,
+    "currency": "KZT",
+    "export_required": true
+  },
+  "steps": [
+    {
+      "step": 1,
+      "title": "Сведения о заявителе",
+      "description": "Введите данные о вашей организации",
+      "fields": [
+        {
+          "id": "bin",
+          "label": "БИН организации",
+          "type": "text",
+          "mask": "############",
+          "validation": {
+            "required": true,
+            "length": 12,
+            "pattern": "^\\d{12}$"
+          },
+          "prefill": "egov.bin"
+        },
+        {
+          "id": "company_name",
+          "label": "Наименование организации",
+          "type": "text",
+          "validation": {
+            "required": true
+          },
+          "prefill": "egov.company_name"
+        },
+        {
+          "id": "director_name",
+          "label": "ФИО руководителя",
+          "type": "text",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "phone",
+          "label": "Контактный телефон",
+          "type": "text",
+          "mask": "+7 (###) ###-##-##",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "email",
+          "label": "Email",
+          "type": "text",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "export_countries",
+          "label": "Страны экспорта",
+          "type": "text",
+          "placeholder": "Россия, Китай, ...",
+          "validation": {
+            "required": true
+          },
+          "hint": "Перечислите страны через запятую"
+        },
+        {
+          "id": "export_volume_usd",
+          "label": "Объём экспорта за последний год (USD)",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "min": 0
+          }
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Параметры лизинга",
+      "description": "Льготная ставка 14% для экспортёров",
+      "fields": [
+        {
+          "id": "equipment_type",
+          "label": "Вид оборудования",
+          "type": "select",
+          "options": [
+            "Вагоны грузовые",
+            "Вагоны пассажирские",
+            "Авиатранспорт",
+            "Спецтехника"
+          ],
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "equipment_count",
+          "label": "Количество единиц",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "min": 1
+          }
+        },
+        {
+          "id": "equipment_cost",
+          "label": "Стоимость оборудования (тенге)",
+          "type": "number",
+          "mask": "number",
+          "validation": {
+            "required": true,
+            "min": 10000000,
+            "max": 1000000000
+          }
+        },
+        {
+          "id": "advance_pct",
+          "label": "Размер аванса (%)",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "min": 15,
+            "max": 49
+          }
+        },
+        {
+          "id": "term_months",
+          "label": "Срок лизинга (месяцев)",
+          "type": "select",
+          "options": [
+            24,
+            36,
+            48,
+            60,
+            72,
+            84,
+            96,
+            108,
+            120
+          ],
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "advance_amount",
+          "label": "Сумма аванса (тенге)",
+          "type": "calculated",
+          "formula": "equipment_cost * advance_pct / 100",
+          "readonly": true,
+          "format": "currency"
+        },
+        {
+          "id": "principal",
+          "label": "Сумма финансирования (тенге)",
+          "type": "calculated",
+          "formula": "equipment_cost - advance_amount",
+          "readonly": true,
+          "format": "currency"
+        },
+        {
+          "id": "monthly_payment",
+          "label": "Ежемесячный платёж (тенге)",
+          "type": "calculated",
+          "formula": "annuity(principal, params.rate_annual_pct, term_months)",
+          "readonly": true,
+          "format": "currency",
+          "highlight": true
+        },
+        {
+          "id": "total_payment",
+          "label": "Общая сумма выплат (тенге)",
+          "type": "calculated",
+          "formula": "monthly_payment * term_months",
+          "readonly": true,
+          "format": "currency"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Экспортная документация",
+      "fields": [
+        {
+          "id": "export_contract",
+          "label": "Экспортный контракт",
+          "type": "file",
+          "accept": ".pdf",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "business_plan",
+          "label": "Бизнес-план",
+          "type": "file",
+          "accept": ".pdf,.doc,.docx",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "financial_report",
+          "label": "Финансовая отчётность за последние 2 года",
+          "type": "file",
+          "accept": ".pdf,.xlsx",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "equipment_invoice",
+          "label": "Счёт-фактура на оборудование",
+          "type": "file",
+          "accept": ".pdf",
+          "validation": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Подтверждение",
+      "fields": [
+        {
+          "id": "consent_personal_data",
+          "label": "Согласен на обработку персональных данных",
+          "type": "checkbox",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "consent_accuracy",
+          "label": "Подтверждаю достоверность предоставленных сведений",
+          "type": "checkbox",
+          "validation": {
+            "required": true
+          }
+        },
+        {
+          "id": "consent_export_check",
+          "label": "Подтверждаю статус экспортёра и готовность к проверке",
+          "type": "checkbox",
+          "validation": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "atom_tamga_id": "cef7beea2d020eda8e34587ff1424d3f06ac5f72571dfe45509176fa08c9cfb3"
+}

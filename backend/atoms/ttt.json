@@ -1,0 +1,26 @@
+{
+  "atom_id": "ttt",
+  "version": "1.0.0",
+  "product_name": "ооо",
+  "category": "general",
+  "description": "орвапилвоарплмыовамлорытвам",
+  "logic_math": "none",
+  "params": {},
+  "steps": [
+    {
+      "step": 1,
+      "title": "Шаг 1",
+      "fields": [
+        {
+          "id": "field_1",
+          "label": "Поле 1",
+          "type": "text",
+          "validation": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "atom_tamga_id": "2b494b2950a7daa71162f6548a9f4ba0a5bbf6dd7ac2a6766d16c278b0edf8ed"
+}

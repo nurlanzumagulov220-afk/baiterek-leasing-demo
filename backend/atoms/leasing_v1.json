@@ -1,0 +1,38 @@
+{
+  "atom_id": "leasing_v1",
+  "version": "1.0.0",
+  "product_name": "Лизинг оборудования / Вагоны",
+  "logic_math": "annuity",
+  "params": {
+    "rate_annual_pct": 18.0,
+    "min_amount": 5000000,
+    "max_amount": 500000000,
+    "min_months": 12,
+    "max_months": 84,
+    "advance_pct_min": 10,
+    "advance_pct_max": 49,
+    "currency": "KZT"
+  },
+  "fields": [
+    {
+      "id": "equipment_cost",
+      "label": "Стоимость оборудования",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "advance_pct",
+      "label": "Аванс (%)",
+      "type": "number",
+      "required": true
+    },
+    {
+      "id": "term_months",
+      "label": "Срок (мес)",
+      "type": "number",
+      "required": true
+    }
+  ],
+  "description": "Аннуитетный лизинговый продукт. Все параметры изменяются без передеплоя.",
+  "atom_tamga_id": "801eae9f34f2bd42c7e18b948edadfa8a8d156af8ee281215aeb3bcd54986fa0"
+}

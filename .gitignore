@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.db
+.env
+.DS_Store
+venv/
+.venv/
+dist/
+node_modules/
+
+backend/fonts/
