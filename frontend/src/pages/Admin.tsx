@@ -296,15 +296,25 @@ export default function Admin() {
                         </select>
                       </td>
                       <td onClick={e => e.stopPropagation()}>
-                        <a
-                          href={`http://localhost:8000/applications/${a.app_id}/contract.pdf`}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: 11, padding: '3px 8px', textDecoration: 'none' }}
+                          style={{ fontSize: 11, padding: '3px 8px' }}
+                          onClick={async () => {
+                            const token = localStorage.getItem('token')
+                            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/applications/${a.app_id}/contract.pdf`, {
+                              headers: { Authorization: `Bearer ${token}` }
+                            })
+                            const blob = await res.blob()
+                            const url = URL.createObjectURL(blob)
+                            const link = document.createElement('a')
+                            link.href = url
+                            link.download = `contract_${a.app_id.slice(0, 8).toUpperCase()}.pdf`
+                            link.click()
+                            URL.revokeObjectURL(url)
+                          }}
                         >
                           📄 PDF
-                        </a>
+                        </button>
                       </td>
                     </tr>
                     {isExpanded && (
