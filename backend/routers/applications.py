@@ -568,7 +568,7 @@ def _generate_contract_pdf(record: models.Application) -> bytes:
     row("Общая сумма выплат:", fmt_kzt(fd.get("total_payment")))
     pdf.ln(4)
 
-    section("4. AI-ВЕРИФИКАЦИЯ (Tol / Aksakal)")
+    section("4. AI-ВЕРИФИКАЦИЯ (Tol / TAC)")
     trust = record.trust_score
     row("Trust Score:", f"{trust * 100:.0f}%" if trust is not None else "—")
     row("Статус:", record.verification_status or "—")
@@ -606,7 +606,7 @@ def _generate_contract_pdf(record: models.Application) -> bytes:
     qr_size_mm = 38   # размер QR-изображения в PDF (мм)
     text_col_x = lm + qr_size_mm + 6
 
-    section("7. ИСПОЛНЯЮЩИЙ ОРАКУЛ — EXECUTION ORACLE · QumyrsqaCore™")
+    section("7. ИСПОЛНЯЮЩИЙ ОРАКУЛ — EXECUTION ORACLE · Smart Protection™")
     pdf.ln(2)
 
     block_y = pdf.get_y()
@@ -692,7 +692,7 @@ def _generate_contract_pdf(record: models.Application) -> bytes:
     pdf.set_text_color(120, 120, 120)
     pdf.cell(0, 5,
              f"Сформировано: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}  ·  "
-             f"QumyrsqaCore™ Execution Oracle  ·  Baiterek Leasing Engine v1.0",
+             f"Smart Protection™ Execution Oracle  ·  Baiterek Leasing Engine v1.0",
              align="C")
 
     buf = io.BytesIO()
